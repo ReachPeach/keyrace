@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Help page</title>
+
+</head>
+<body>
+{% if text %}
+    <h1>text given:</h1>
+    <br>{{ text }}
+    <h1>input text:</h1>
+    <div class bobik>
+        <label>
+            <textarea>"Start typing..."</textarea>
+        </label>
+    </div>
+{% else %}
+    <h1>No text provided!</h1>
+{% endif %}
+</body>
+</html>
