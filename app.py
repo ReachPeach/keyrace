@@ -1,24 +1,24 @@
-import random
-import string
+import os
 
-from flask import Flask, render_template
+import flask
+from flask import Flask
+
+from backend.api.v1.blueprint import blueprint as api_v1_blueprint
+from storage import PlayerStorage
+from storage.game_storage import GameStorage
+
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+game_storage = GameStorage()
+player_storage = PlayerStorage()
 
 app = Flask(__name__)
-rand = random.Random
+app.register_blueprint(api_v1_blueprint)
 
 
-def generate_word(count):
-    return ''.join(random.choices(string.ascii_lowercase, k=count))
-
-
-def generate_text():
-    return ' '.join([generate_word(random.randint(a=3, b=7)) for _ in range(10)])
-
-
-@app.route('/')
-@app.route('/about')
-def about():
-    return render_template('about.html', text=generate_text())
+@app.route("/", methods=["GET"])
+def index():
+    return flask.redirect("/api/v1/static/index.html")
 
 
 if __name__ == '__main__':
