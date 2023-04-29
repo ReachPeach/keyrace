@@ -1,3 +1,4 @@
 flask==2.3.1
 pytest==7.3.1
+selenium~=4.9.0
 ujson==5.7.0
