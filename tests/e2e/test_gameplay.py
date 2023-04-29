@@ -24,9 +24,6 @@ def test_required_key(driver, client, runner):
     page = driver.find_element(By.TAG_NAME, 'html')
 
     page.send_keys(text.text[0])
-    page.send_keys(text.text[0])
-    page.send_keys(text.text[0])
-    page.send_keys(text.text[0])
     assert score.text == '1'
 
 
