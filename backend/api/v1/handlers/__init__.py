@@ -4,4 +4,4 @@ from .game import game_info
 from .game import game_state_info
 from .player import create_player
 from .player import player_info
-from .static import static
+from .files import static

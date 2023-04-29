@@ -18,7 +18,7 @@ app.register_blueprint(api_v1_blueprint)
 
 @app.route("/", methods=["GET"])
 def index():
-    return flask.redirect("/api/v1/static/index.html")
+    return flask.redirect("/api/v1/file/index.html")
 
 
 if __name__ == '__main__':
