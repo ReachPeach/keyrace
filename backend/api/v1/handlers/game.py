@@ -1,11 +1,13 @@
 import http
+import random
 
 import flask
 
 import app
 from backend.api.v1.route import route
+from backend.external_api import WikipediaClient
 from backend.game import Game
-from backend.utils import generate_id, generate_text
+from backend.utils import generate_id
 
 
 @route("POST", "/game/create")
@@ -24,9 +26,13 @@ def create_game():
 
     players = players.split(",")
 
+    text = WikipediaClient().page_text("Клавогонки")
+    max_text_length = len(text)
+    text_start_pos = random.randint(0, max(0, max_text_length - text_length))
+
     game = Game(
         id=generate_id(),
-        text=generate_text(text_length),
+        text=text[text_start_pos: text_start_pos + text_length].strip(),
         players=[app.player_storage.select(id=player_id) for player_id in players],
     )
 
