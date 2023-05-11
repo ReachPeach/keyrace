@@ -3,6 +3,9 @@ from typing import Optional
 from backend.game.model import Model
 from backend.game.player import Player
 from backend.game.state import GameState
+from log import get_logger
+
+LOG = get_logger()
 
 
 class Game(Model):
@@ -19,9 +22,12 @@ class Game(Model):
         self._players: list[Player] = players
 
         self.game_state: GameState = GameState(
+            game_id=self.id,
             players=self.players,
             text_length=len(text),
         )
+
+        LOG.debug(f"Creating game (game_id = {self.id})")
 
     @property
     def players(self) -> list[Player]:
