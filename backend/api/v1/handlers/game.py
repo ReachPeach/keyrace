@@ -26,7 +26,7 @@ def create_game():
 
     players = players.split(",")
 
-    text = WikipediaClient().page_text("Клавогонки")
+    text = WikipediaClient().page_text("Клавогонки").replace("\n", " ")
     max_text_length = len(text)
     text_start_pos = random.randint(0, max(0, max_text_length - text_length))
 
