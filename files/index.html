@@ -2,24 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Welcome page</title>
     <script src="index.js"></script>
     <style>
         body {
             text-align: center;
         }
-
-        textarea {
-            text-align: center;
-            resize: none;
-            width: 100%;
-        }
     </style>
 </head>
 <body onload="onLoad()">
-<textarea id="inputarea" disabled="disabled"></textarea>
-<div id="playerScore">
-
+<div class id="description">
+    You can <a style="color: cornflowerblue;text-decoration: underline; cursor: pointer"
+               onclick="createNewGame()">create</a> a new game
+    or join one of the following:
 </div>
+<div class id="openedGames">
+</div>
+
+<template id="openedGame">
+    <p style="color: cornflowerblue;text-decoration: underline; cursor: pointer;visibility: hidden" id="game">link)
+</template>
 </body>
 </html>

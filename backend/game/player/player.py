@@ -16,8 +16,6 @@ class Player(Model):
         self.name: str = name
         self.rating: float = rating
 
-        LOG.debug(f"Creating player (player_id = {self.id})")
-
     def to_json(self):
         return {
             "id": self.id,

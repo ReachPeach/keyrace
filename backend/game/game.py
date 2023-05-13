@@ -1,13 +1,13 @@
-from typing import Optional
-
 from backend.game.model import Model
 from backend.game.player import Player
 from backend.game.state import GameState
 from backend.utils import generate_text
 from log import get_logger
 
+
 LOG = get_logger()
 
+READY: dict[str, list[int, int]] = {}
 
 class Game(Model):
     def __init__(
@@ -28,10 +28,23 @@ class Game(Model):
             text_length=len(text),
         )
 
-        LOG.debug(f"Creating game (game_id = {self.id})")
+        if id not in READY:
+            READY[id] = [0, len(players)]
 
     def start(self):
-        self.game_state.try_start()
+        READY[self.id][0] += 1
+
+        self.game_state.try_start(READY[self.id][0] >= READY[self.id][1])
+
+    def add_player(self, player):
+        from storage import GameStorage
+
+        READY[self.id][1] += 1
+
+        self.players.append(player)
+        self.game_state.players.append(player)
+
+        GameStorage().add_player(self, player)
 
     def is_game_end(self) -> bool:
         return self.game_state.is_game_end()

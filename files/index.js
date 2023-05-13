@@ -1,3 +1,13 @@
+async function putData(key_name, key_value) {
+    await fetch('/api/v1/session/put', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'key_name=' + key_name + '&key_value=' + key_value
+    })
+}
+
 async function createPlayer(name) {
     let request = await fetch('/api/v1/player/create', {
         method: 'POST',
@@ -7,10 +17,18 @@ async function createPlayer(name) {
         body: 'name=' + name
 
     })
-    return await request.text()
+
+    playerId = await request.text()
+    await putData('player_id', playerId)
+    return playerId
 }
 
-async function createGame(playerId) {
+async function forwardToGame(gameId) {
+    await putData('game_id', gameId)
+    window.location.href = "/api/v1/file/game.html"
+}
+
+async function createNewGame() {
     let text_length = Math.floor(Math.random() * 50) + 50;
     let request = await fetch('/api/v1/game/create', {
         method: 'POST',
@@ -19,80 +37,50 @@ async function createGame(playerId) {
         },
         body: "text_length=" + text_length + "&players=" + playerId
     })
-    return await request.text()
+
+    let gameId = await request.text()
+    await forwardToGame(gameId)
 }
 
-async function getGameInfo(gameId) {
-    let request = await fetch('/api/v1/game/info?id=' + gameId, {
-        method: 'GET',
-    })
-    return await request.json()
-}
+let playerId
 
-async function getGameStateInfo(gameId) {
-    let request = await fetch('/api/v1/game/state/info?id=' + gameId, {
-        method: 'GET',
-    })
-    return await request.json()
-}
+function forwardToGameHandler(gameId) {
+    return async () => {
+        console.log(gameId, playerId)
+        let request = await fetch('/api/v1/game/join', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: "game_id=" + gameId + "&player_id=" + playerId
+        })
 
-let gameId;
-
-let gameStateInfo;
-
-async function updateGameStateInfo(playerId) {
-    gameStateInfo = await getGameStateInfo(gameId)
-    document.getElementById('playerScore').innerText = gameStateInfo.score[playerId]
-    if (gameStateInfo.winner) {
-        document.getElementById('playerScore').style.color = 'blue'
-        document.getElementById('playerScore').style.background = 'green'
+        await request
+        await forwardToGame(gameId)
     }
 }
 
-let playerId;
+async function fillOpenedGames() {
+    let request = await fetch('/api/v1/games/ids', {
+        method: 'GET',
+    })
+    let gamesIds = await request.json()
+    let gamesList = document.getElementById('openedGames')
 
-async function changeGameState(delta) {
-    await fetch('/api/v1/game/state/change', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: "game_id=" + gameId + "&player_id=" + playerId + "&delta=" + delta
-    });
-}
-
-async function startGame() {
-    await fetch('/api/v1/game/start', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: "id=" + gameId
-    });
-}
-
-
-let gameInfo;
-let currentTextPosition = 0;
-let text;
-
-async function onKeyDownHandler(event) {
-    if (event.key === text[currentTextPosition]) {
-        ++currentTextPosition
-        await changeGameState(1)
-        await updateGameStateInfo(playerId)
+    for (let gameId of gamesIds.ids) { // {ids, []}
+        console.log(gameId)
+        let gameElemClone = document.querySelector("#openedGame").content.cloneNode(true)
+        let gameEnterLink = gameElemClone.querySelector("#game")
+        gameEnterLink.textContent = gameId
+        gameEnterLink.onclick = forwardToGameHandler(gameId)
+        gameEnterLink.style.visibility = "visible"
+        gamesList.appendChild(gameEnterLink)
     }
 }
 
 async function onLoad() {
     playerId = await createPlayer("p1")
-    gameId = await createGame(playerId)
-    gameInfo = await getGameInfo(gameId)
-    document.getElementById('inputarea').innerText = gameInfo.text
-    text = gameInfo.text
-    await updateGameStateInfo(playerId)
-    window.onkeydown = onKeyDownHandler
-    await startGame()
+    await fillOpenedGames()
 }
 
 

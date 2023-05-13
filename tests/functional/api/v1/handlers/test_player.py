@@ -14,27 +14,27 @@ TEST_PLAYER = Player(
 
 def test_create_player_ok(client):
     with mock.patch(
-            "storage.player_storage.PlayerStorage.upsert",
+            "storage.player_storage.PlayerStorage.insert",
             side_effect=dummy_side_effect
-    ) as upsert_player_mock:
+    ) as insert_player_mock:
         response = client.post("/api/v1/player/create", data={
             "name": "abacaba"
         })
 
         assert response.status_code == http.HTTPStatus.OK
-        upsert_player_mock.assert_called()
+        insert_player_mock.assert_called()
 
 
 def test_create_player_name_not_provided(client):
     with mock.patch(
-            "storage.player_storage.PlayerStorage.upsert",
+            "storage.player_storage.PlayerStorage.insert",
             side_effect=dummy_side_effect
-    ) as upsert_player_mock:
+    ) as insert_player_mock:
         response = client.post("/api/v1/player/create")
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'name' argument must be provided"
-        upsert_player_mock.assert_not_called()
+        insert_player_mock.assert_not_called()
 
 
 def test_player_info_ok(client):
