@@ -30,8 +30,6 @@ class GameState(Model):
         self.type: GameStateType = GameStateType.IDLE
         self.players_score: dict[str, float] = {player.id: 0.0 for player in self.players}
 
-        LOG.debug(f"Creating game state (game_state_id = {self.id})")
-
     def _set_type(self, type: GameStateType):
         from storage import GameStateStorage
 
@@ -41,28 +39,21 @@ class GameState(Model):
 
         GameStateStorage().update(self)
 
-    def try_start(self, player):
-        if self._type != GameStateType.IDLE:
+    def try_start(self, all_ready):
+        if self.type != GameStateType.IDLE:
             LOG.debug(
                 f"Failed to start game (game_id = {self.game_id}). Current game state type is {self.type.name}"
             )
 
             raise Exception("Game must be in IDLE to start the game")
 
-        self._ready[player.id] = True
         LOG.debug(
             f"Player (player_id = ..) is ready to start game (game_id = {self.game_id})."
         )
-        # TODO:
-        # if all(self._ready.values()):
-        #     LOG.debug(f"Starting game (id = {self.game_id})")
-        #     self._set_type(GameStateType.IN_PROGRESS)
 
-    def add_player(self, player):
-        //TODO:
-        # self._players.add(player)
-        # self._players_score[player.id] = 0.0
-        # self._ready[player.id] = False
+        if all_ready:
+            LOG.debug(f"Starting game (id = {self.game_id})")
+            self._set_type(GameStateType.IN_PROGRESS)
 
     def change_player_score(self, player_id: str, delta: float):
         from storage import GameStateStorage

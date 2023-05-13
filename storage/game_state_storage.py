@@ -1,7 +1,10 @@
 from backend.game.state import GameState, GameStateType
+from log import get_logger
 from storage import get_driver
-from .player_storage import PlayerStorage
 from storage.base_storage import BaseStorage
+from .player_storage import PlayerStorage
+
+LOG = get_logger()
 
 DRIVER = get_driver()
 
@@ -13,6 +16,8 @@ class GameStateStorage(BaseStorage):
     SCORE_TABLE_PATH = "game_states_player_score"
 
     def insert(self, obj: GameState):
+        LOG.debug(f"Creating game state (game_state_id = {obj.id})")
+
         DRIVER.execute_query(
             """
             insert into {table_name}
@@ -66,10 +71,10 @@ class GameStateStorage(BaseStorage):
             DRIVER.execute_query(
                 """
                 update {table_name} set
-                    player_id = '{player_id}',
                     score = {score}
                 where
-                    id = '{id}';
+                    id = '{id}'
+                    and player_id = '{player_id}';
                 """.format(
                     table_name=self.SCORE_TABLE_PATH,
                     id=obj.id,
@@ -122,3 +127,16 @@ class GameStateStorage(BaseStorage):
 
     def delete(self, _id: str):
         pass
+
+    def get_opened_games(self):
+        ids = DRIVER.execute_and_fetch_query("""
+            select 
+                game_id
+            from {table_name}
+            where 
+                game_type = 'IDLE'
+        """.format(
+            table_name=self.INFO_TABLE_PATH,
+        ))
+
+        return ids

@@ -1,6 +1,9 @@
 from backend.game.player import Player
+from log import get_logger
 from storage.base_storage import BaseStorage
 from storage.driver import get_driver
+
+LOG = get_logger()
 
 DRIVER = get_driver()
 
@@ -49,6 +52,8 @@ class PlayerStorage(BaseStorage):
         return self.select(id=_id)[0]
 
     def insert(self, obj: Player):
+        LOG.debug(f"Creating player (player_id = {obj.id})")
+
         DRIVER.execute_query(
             """
             insert into {table_name}

@@ -29,17 +29,16 @@ async function changeGameState(delta) {
 async function updateGameStateInfo() {
     gameStateInfo = await getGameStateInfo()
     if (gameStateInfo.winner) {
-        // TODO:
-        // document.getElementById('userProgress').style.color = 'blue'
-        // document.getElementById('userProgress').style.background = 'green'
-    } else {
-        for (const [i, value] of players_ids.entries()) {
+        document.getElementById('userProgress').style.color = 'blue'
+        document.getElementById('userProgress').style.background = 'green'
+    }
+
+    for (const [i, value] of players_ids.entries()) {
             let progressBar = document.getElementsByClassName("progressBar")[i]
             let userScore = document.getElementsByClassName("score")[i]
             progressBar.value = gameStateInfo.score[value] / generated_text.length
-            userScore.innerText = Math.round((gameStateInfo.score[value] / generated_text.length + Number.EPSILON) * 100).toString() + "%"
+            userScore.innerText = Math.ceil((gameStateInfo.score[value] / generated_text.length) * 100).toString() + "%"
         }
-    }
 }
 
 async function onKeyDownHandler(event) {
@@ -132,7 +131,7 @@ function onGameHandler(event) {
 }
 
 function onGameFinish() {
-    // TODO
+    window.onkeydown = null
     console.log("Game finished!")
 }
 

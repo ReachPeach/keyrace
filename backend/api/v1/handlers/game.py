@@ -6,14 +6,15 @@ from time import sleep
 import flask
 import ujson
 
-from backend.api.v1.route import route
+from backend.api.v1.route import route, sock_route
 from backend.external_api import WikipediaClient
 from backend.game import Game
 from backend.utils import generate_id
-from storage import PlayerStorage, GameStorage
+from storage import PlayerStorage, GameStorage, GameStateStorage
 
 player_storage = PlayerStorage()
 game_storage = GameStorage()
+game_state_storage = GameStateStorage()
 
 
 @route("POST", "/game/create")
@@ -60,8 +61,7 @@ def game_start():
     if player_id is None:
         return "'player_id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    player = player_storage.select(id=player_id)
-    game.start(player)
+    game.start()
 
     return "OK"
 
@@ -96,9 +96,11 @@ def monitor_game_state(sock):
 
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
-    game = game_storage.select(id=id)
+    game = game_storage.select_by_id(id)
     prev_state = copy.copy(game.game_state.type)
     while True:
+        game = game_storage.select_by_id(id)
+
         if game.game_state.type != prev_state:
             prev_state = copy.copy(game.game_state.type)
             sock.send(ujson.dumps(game.game_state.to_json()))
@@ -110,10 +112,10 @@ def monitor_game(sock):
 
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
-    save_count = len(game_storage.select(id=id).players)
+    save_count = len(game_storage.select_by_id(id).players)
 
     while True:
-        game = game_storage.select(id=id)
+        game = game_storage.select_by_id(id)
         current_count = len(game.players)
         if save_count != current_count:
             save_count = current_count
@@ -152,7 +154,7 @@ def game_change_state():
 
 @route("GET", '/games/ids')
 def opened_games():
-    game_ids = game_storage.get_opened_games()
+    game_ids = game_state_storage.get_opened_games()
     return flask.jsonify({"ids": game_ids})
 
 
@@ -168,8 +170,8 @@ def join_game():
     if player_id is None:
         return "'player_id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    game = game_storage.select(id=game_id)
-    player = player_storage.select(id=player_id)
+    game = game_storage.select_by_id(game_id)
+    player = player_storage.select(id=player_id)[0]
     game.add_player(player)
 
     return "OK"

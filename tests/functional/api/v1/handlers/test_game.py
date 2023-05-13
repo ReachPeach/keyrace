@@ -29,9 +29,9 @@ TEST_GAME = Game(
 def test_create_game_ok(client):
     with (
         mock.patch(
-            "storage.game_storage.GameStorage.upsert",
+            "storage.game_storage.GameStorage.insert",
             side_effect=dummy_side_effect
-        ) as upsert_game_mock,
+        ) as insert_game_mock,
         mock.patch(
             "storage.player_storage.PlayerStorage.select",
             return_value=TEST_PLAYERS[0],
@@ -44,15 +44,15 @@ def test_create_game_ok(client):
 
         assert response.status_code == http.HTTPStatus.OK
         player_select_mock.assert_called()
-        upsert_game_mock.assert_called()
+        insert_game_mock.assert_called()
 
 
 def test_create_game_players_not_provided(client):
     with (
         mock.patch(
-            "storage.game_storage.GameStorage.upsert",
+            "storage.game_storage.GameStorage.insert",
             side_effect=dummy_side_effect
-        ) as upsert_game_mock,
+        ) as insert_game_mock,
         mock.patch(
             "storage.player_storage.PlayerStorage.select",
             return_value=TEST_PLAYERS[0],
@@ -65,15 +65,15 @@ def test_create_game_players_not_provided(client):
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'players' argument must be provided"
         player_select_mock.assert_not_called()
-        upsert_game_mock.assert_not_called()
+        insert_game_mock.assert_not_called()
 
 
 def test_create_game_text_length_not_provided(client):
     with (
         mock.patch(
-            "storage.game_storage.GameStorage.upsert",
+            "storage.game_storage.GameStorage.insert",
             side_effect=dummy_side_effect
-        ) as upsert_game_mock,
+        ) as insert_game_mock,
         mock.patch(
             "storage.player_storage.PlayerStorage.select",
             return_value=TEST_PLAYERS[0],
@@ -86,88 +86,88 @@ def test_create_game_text_length_not_provided(client):
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'text_length' argument must be provided"
         player_select_mock.assert_not_called()
-        upsert_game_mock.assert_not_called()
+        insert_game_mock.assert_not_called()
 
 
 def test_game_start_ok(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.post("/api/v1/game/start", data={
             "id": TEST_GAME.id,
         })
 
         assert response.status_code == http.HTTPStatus.OK
         assert response.text == "OK"
-        upsert_game_mock.assert_called()
+        insert_game_mock.assert_called()
 
 
 def test_game_start_id_not_provided(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.post("/api/v1/game/start")
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'id' argument must be provided"
-        upsert_game_mock.assert_not_called()
+        insert_game_mock.assert_not_called()
 
 
 def test_game_info_test_ok(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.get(f"/api/v1/game/info?id={TEST_GAME.id}")
 
         assert response.status_code == http.HTTPStatus.OK
         assert response.json == TEST_GAME.to_json()
-        upsert_game_mock.assert_called()
+        insert_game_mock.assert_called()
 
 
 def test_game_info_test_id_not_provided(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.get(f"/api/v1/game/info")
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'id' argument must be provided"
-        upsert_game_mock.assert_not_called()
+        insert_game_mock.assert_not_called()
 
 
 def test_game_state_info_test_ok(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.get(f"/api/v1/game/state/info?id={TEST_GAME.id}")
 
         assert response.status_code == http.HTTPStatus.OK
         assert response.json == TEST_GAME.game_state.to_json()
-        upsert_game_mock.assert_called()
+        insert_game_mock.assert_called()
 
 
 def test_game_state_info_test_id_not_provided(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.get(f"/api/v1/game/state/info")
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'id' argument must be provided"
-        upsert_game_mock.assert_not_called()
+        insert_game_mock.assert_not_called()
 
 
 def test_game_change_state_ok(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.post(f"/api/v1/game/state/change", data={
             "game_id": TEST_GAME.id,
             "player_id": TEST_PLAYERS[0].id,
@@ -176,14 +176,14 @@ def test_game_change_state_ok(client):
 
         assert response.status_code == http.HTTPStatus.OK
         assert response.text == "OK"
-        upsert_game_mock.assert_called()
+        insert_game_mock.assert_called()
 
 
 def test_game_change_state_game_id_not_provided(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.post(f"/api/v1/game/state/change", data={
             "player_id": TEST_PLAYERS[0].id,
             "delta": 1.0,
@@ -191,14 +191,14 @@ def test_game_change_state_game_id_not_provided(client):
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'game_id' argument must be provided"
-        upsert_game_mock.assert_not_called()
+        insert_game_mock.assert_not_called()
 
 
 def test_game_change_state_player_id_not_provided(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.post(f"/api/v1/game/state/change", data={
             "game_id": TEST_GAME.id,
             "delta": 1.0,
@@ -206,14 +206,14 @@ def test_game_change_state_player_id_not_provided(client):
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'player_id' argument must be provided"
-        upsert_game_mock.assert_not_called()
+        insert_game_mock.assert_not_called()
 
 
 def test_game_change_state_delta_not_provided(client):
     with mock.patch(
             "storage.game_storage.GameStorage.select",
             return_value=TEST_GAME,
-    ) as upsert_game_mock:
+    ) as insert_game_mock:
         response = client.post(f"/api/v1/game/state/change", data={
             "game_id": TEST_GAME.id,
             "player_id": TEST_PLAYERS[0].id,
@@ -221,4 +221,4 @@ def test_game_change_state_delta_not_provided(client):
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'delta' argument must be provided"
-        upsert_game_mock.assert_not_called()
+        insert_game_mock.assert_not_called()
