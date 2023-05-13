@@ -2,10 +2,12 @@ import http
 
 import flask
 
-import app
 from backend.api.v1.route import route
 from backend.game.player import Player
 from backend.utils import generate_id
+from storage import PlayerStorage
+
+player_storage = PlayerStorage()
 
 
 @route("POST", "/player/create")
@@ -21,7 +23,7 @@ def create_player():
         rating=0.0,
     )
 
-    app.player_storage.upsert(player)
+    player_storage.insert(player)
 
     return player.id, http.HTTPStatus.OK
 
@@ -33,6 +35,6 @@ def player_info():
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    player = app.player_storage.select(id=id)
+    player = player_storage.select_by_id(id)
 
     return flask.jsonify(player.to_json())

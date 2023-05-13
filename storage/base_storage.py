@@ -7,7 +7,7 @@ class BaseStorage(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def upsert(self, obj: object):
+    def update(self, obj: object):
         pass
 
     @abc.abstractmethod

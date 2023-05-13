@@ -20,30 +20,31 @@ class GameState(Model):
             game_id: str,
             players: list[Player],
             text_length: int,
+            id: str = generate_id(),
     ):
-        self.id = generate_id()
+        self.id = id
         self.game_id = game_id
-        self._players: list[Player] = players
-        self._text_length = text_length
+        self.players: list[Player] = players
+        self.text_length = text_length
 
-        self._type: GameStateType = GameStateType.IDLE
-        self._players_score: dict[str, float] = {player.id: 0.0 for player in self._players}
+        self.type: GameStateType = GameStateType.IDLE
+        self.players_score: dict[str, float] = {player.id: 0.0 for player in self.players}
 
         LOG.debug(f"Creating game state (game_state_id = {self.id})")
 
     def _set_type(self, type: GameStateType):
-        LOG.debug(f"Set state for game state (game_state_id = {self.id}) to {self._type.name}")
+        from storage import GameStateStorage
 
-        self._type = type
+        LOG.debug(f"Set state for game state (game_state_id = {self.id}) to {self.type.name}")
 
-    @property
-    def player_scores(self) -> dict[str, float]:
-        return self._players_score
+        self.type = type
+
+        GameStateStorage().update(self)
 
     def try_start(self):
-        if self._type != GameStateType.IDLE:
+        if self.type != GameStateType.IDLE:
             LOG.debug(
-                f"Failed to start game (game_id = {self.game_id}). Current game state type is {self._type.name}"
+                f"Failed to start game (game_id = {self.game_id}). Current game state type is {self.type.name}"
             )
 
             raise Exception("Game must be in IDLE to start the game")
@@ -53,35 +54,39 @@ class GameState(Model):
         self._set_type(GameStateType.IN_PROGRESS)
 
     def change_player_score(self, player_id: str, delta: float):
-        if self._type != GameStateType.IN_PROGRESS:
+        from storage import GameStateStorage
+
+        if self.type != GameStateType.IN_PROGRESS:
             LOG.debug(f"Fail to change player score (game_id = {self.game_id}, player_id = {player_id})."
-                      f"Current game state type is {self._type.name}"
+                      f"Current game state type is {self.type.name}"
                       )
 
             raise Exception("Game state type must be IN_PROGRESS to change score")
 
         LOG.debug(f"Changing player score (game_id = {self.game_id}, player_id = {player_id}, delta = {delta})")
 
-        self._players_score[player_id] += delta
+        self.players_score[player_id] += delta
 
         if self._check_maybe_game_end():
             LOG.debug(f"Ending game (game_id = {self.game_id})")
 
             self._set_type(GameStateType.DONE)
 
+        GameStateStorage().update(self)
+
     def is_game_end(self) -> bool:
-        return self._type == GameStateType.DONE
+        return self.type == GameStateType.DONE
 
     def get_winner(self) -> str:
-        for player in self._players:
-            if self._players_score[player.id] >= self._text_length:
+        for player in self.players:
+            if self.players_score[player.id] >= self.text_length:
                 return player.id
 
     def to_json(self):
         json = {
             "id": self.id,
-            "score": self.player_scores,
-            "type": self._type.name,
+            "score": self.players_score,
+            "type": self.type.name,
         }
 
         if self.is_game_end():
@@ -90,8 +95,8 @@ class GameState(Model):
         return json
 
     def _check_maybe_game_end(self) -> bool:
-        for player in self._players:
-            if self._players_score[player.id] >= self._text_length:
+        for player in self.players:
+            if self.players_score[player.id] >= self.text_length:
                 return True
 
         return False
