@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game page</title>
+    <script src="game.js"></script>
+    <style>
+        body {
+            text-align: center;
+        }
+
+        .stateText {
+            font-size: larger;
+            display: table;
+        }
+
+        #help {
+            color: blue;
+        }
+
+        #correctText {
+            color: green
+        }
+
+        #remainingText {
+            color: red;
+        }
+
+        #usersProgress {
+            width: 100%;
+        }
+
+        #userProgress {
+            display: flex;
+        }
+    </style>
+
+</head>
+<body onload="onLoad()">
+
+<div class="stateText">
+    <div id="help">
+        <span>Waiting until the game starts...</span>
+        <span id="ready">0</span>
+        <span>/</span>
+        <span id="all">1</span>
+        <span> players is ready</span>
+    </div>
+    <span id="correctText" style="visibility: hidden"></span>
+    <span id="remainingText" style="visibility: hidden"></span>
+</div>
+
+<button id="playerReady" onclick="onReadyClick()">
+    Готов!
+</button>
+
+<ul id="usersProgress" style="visibility: hidden">
+</ul>
+<template id="userProgressT">
+    <span id="name">User: </span>
+    <span>, progress:</span>
+    <span class="score"></span>
+    <progress value="0" max="1" id="userProgress" class="progressBar" style="width: 90%"></progress>
+    <br>
+</template>
+</body>
+</html>

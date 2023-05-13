@@ -2,6 +2,12 @@ from .game import create_game
 from .game import game_change_state
 from .game import game_info
 from .game import game_state_info
+from .game import monitor_game
+from .game import monitor_game_state
+from .game import opened_games
+from .game import join_game
 from .player import create_player
 from .player import player_info
 from .files import static
+from .session import get
+from .session import put

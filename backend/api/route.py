@@ -3,6 +3,7 @@ import http
 from typing import Callable
 
 import flask
+import flask_sock
 
 from log import get_logger
 from backend.utils import generate_id
@@ -36,6 +37,36 @@ def base_rote(
                 return ret
             except Exception as e:
                 LOG.error(f"Call fails with error '{str(e)}'. Request id = {request_id}")
+
+                return str(e), http.HTTPStatus.INTERNAL_SERVER_ERROR
+
+        return wrapper
+
+    return decorator
+
+
+def base_sock(
+        sock: flask_sock.Sock,
+        url: str,
+):
+    LOG.debug(f"Register sock '{url}'")
+
+    def decorator(function: Callable):
+        @sock.route(path=url)
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            request_id = generate_id()
+
+            try:
+                LOG.info(f"Sock call: '{url}'. Request id = {request_id}")
+
+                ret = function(*args, **kwargs)
+
+                LOG.info(f"Sock call done. Request id = {request_id}")
+
+                return ret
+            except Exception as e:
+                LOG.error(f"Sock call fails with error '{str(e)}'. Request id = {request_id}")
 
                 return str(e), http.HTTPStatus.INTERNAL_SERVER_ERROR
 

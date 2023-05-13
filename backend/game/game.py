@@ -13,13 +13,13 @@ class Game(Model):
             self,
             id: str,
             text: str,
-            players: list[Player],
+            players: set[Player],
             name: Optional[str] = None,
     ):
         self.id: str = id
         self._name: Optional[str] = name
         self._text: str = text
-        self._players: list[Player] = players
+        self._players: set[Player] = players
 
         self.game_state: GameState = GameState(
             game_id=self.id,
@@ -30,11 +30,15 @@ class Game(Model):
         LOG.debug(f"Creating game (game_id = {self.id})")
 
     @property
-    def players(self) -> list[Player]:
+    def players(self) -> set[Player]:
         return self._players
 
-    def start(self):
-        self.game_state.try_start()
+    def start(self, player):
+        self.game_state.try_start(player)
+
+    def add_player(self, player):
+        self._players.add(player)
+        self.game_state.add_player(player)
 
     def is_game_end(self) -> bool:
         return self.game_state.is_game_end()
