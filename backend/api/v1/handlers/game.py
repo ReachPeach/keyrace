@@ -3,11 +3,14 @@ import random
 
 import flask
 
-import app
 from backend.api.v1.route import route
 from backend.external_api import WikipediaClient
 from backend.game import Game
 from backend.utils import generate_id
+from storage import PlayerStorage, GameStorage
+
+player_storage = PlayerStorage()
+game_storage = GameStorage()
 
 
 @route("POST", "/game/create")
@@ -33,10 +36,10 @@ def create_game():
     game = Game(
         id=generate_id(),
         text=text[text_start_pos: text_start_pos + text_length].strip(),
-        players=[app.player_storage.select(id=player_id) for player_id in players],
+        players=[player_storage.select_by_id(player_id) for player_id in players],
     )
 
-    app.game_storage.upsert(game)
+    game_storage.insert(game)
 
     return game.id, http.HTTPStatus.OK
 
@@ -48,7 +51,7 @@ def game_start():
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    game = app.game_storage.select(id=id)
+    game = game_storage.select_by_id(id)
 
     game.start()
 
@@ -62,7 +65,7 @@ def game_info():
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    game = app.game_storage.select(id=id)
+    game = game_storage.select_by_id(id)
 
     return flask.jsonify(game.to_json())
 
@@ -74,7 +77,7 @@ def game_state_info():
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    game = app.game_storage.select(id=id)
+    game = game_storage.select_by_id(id)
 
     return flask.jsonify(game.game_state.to_json())
 
@@ -98,7 +101,7 @@ def game_change_state():
 
     delta = float(delta)
 
-    game = app.game_storage.select(id=game_id)
+    game = game_storage.select_by_id(game_id)
     game.game_state.change_player_score(
         player_id=player_id,
         delta=delta,

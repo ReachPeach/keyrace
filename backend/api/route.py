@@ -1,11 +1,12 @@
 import functools
 import http
+import traceback
 from typing import Callable
 
 import flask
 
-from log import get_logger
 from backend.utils import generate_id
+from log import get_logger
 
 LOG = get_logger()
 
@@ -27,15 +28,19 @@ def base_rote(
             request_id = generate_id()
 
             try:
-                LOG.info(f"{method} call: '{blueprint.url_prefix}{url}'. Request id = {request_id}")
+                LOG.info_store(
+                    f"{method} call: '{blueprint.url_prefix}{url}'. Request id = {request_id}",
+                    request_id=request_id
+                )
 
                 ret = function(*args, **kwargs)
 
-                LOG.info(f"Call done. Request id = {request_id}")
+                LOG.info_store(f"Call done. Request id = {request_id}", request_id=request_id)
 
                 return ret
             except Exception as e:
-                LOG.error(f"Call fails with error '{str(e)}'. Request id = {request_id}")
+                LOG.error_store(f"Call fails with error '{str(e)}'. Request id = {request_id}", request_id=request_id)
+                LOG.error(traceback.format_exc())
 
                 return str(e), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
