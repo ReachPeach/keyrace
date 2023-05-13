@@ -3,6 +3,7 @@ from typing import Optional
 from backend.game.model import Model
 from backend.game.player import Player
 from backend.game.state import GameState
+from backend.utils import generate_text
 from log import get_logger
 
 LOG = get_logger()
@@ -13,13 +14,13 @@ class Game(Model):
             self,
             id: str,
             text: str,
-            players: set[Player],
-            name: Optional[str] = None,
+            players: list[Player],
+            name: str = generate_text(50),
     ):
         self.id: str = id
-        self._name: Optional[str] = name
-        self._text: str = text
-        self._players: set[Player] = players
+        self.name: str = name
+        self.text: str = text
+        self.players: list[Player] = players
 
         self.game_state: GameState = GameState(
             game_id=self.id,
@@ -28,10 +29,6 @@ class Game(Model):
         )
 
         LOG.debug(f"Creating game (game_id = {self.id})")
-
-    @property
-    def players(self) -> set[Player]:
-        return self._players
 
     def start(self, player):
         self.game_state.try_start(player)
@@ -49,7 +46,7 @@ class Game(Model):
     def to_json(self):
         return {
             "id": self.id,
-            "name": self._name,
-            "text": self._text,
-            "players": ",".join([player.id for player in self._players]),
+            "name": self.name,
+            "text": self.text,
+            "players": ",".join([player.id for player in self.players]),
         }

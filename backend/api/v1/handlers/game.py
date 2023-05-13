@@ -6,11 +6,14 @@ from time import sleep
 import flask
 import ujson
 
-import app
-from backend.api.v1.route import route, sock_route
+from backend.api.v1.route import route
 from backend.external_api import WikipediaClient
 from backend.game import Game
 from backend.utils import generate_id
+from storage import PlayerStorage, GameStorage
+
+player_storage = PlayerStorage()
+game_storage = GameStorage()
 
 
 @route("POST", "/game/create")
@@ -25,9 +28,9 @@ def create_game():
     players = flask.request.form.get("players", None)
 
     if players is None:
-        players = set()
-    else:
-        players = players.split(",")
+        return "'players' argument must be provided", http.HTTPStatus.BAD_REQUEST
+
+    players = players.split(",")
 
     text = WikipediaClient().page_text("Клавогонки").replace("\n", " ")
     max_text_length = len(text)
@@ -36,11 +39,10 @@ def create_game():
     game = Game(
         id=generate_id(),
         text=text[text_start_pos: text_start_pos + text_length].strip(),
-        players=set([app.player_storage.select(id=player_id) for player_id in players]),
+        players=[player_storage.select_by_id(player_id) for player_id in players],
     )
-    print(game.players)
 
-    app.game_storage.upsert(game)
+    game_storage.insert(game)
 
     return game.id, http.HTTPStatus.OK
 
@@ -52,13 +54,13 @@ def game_start():
     if game_id is None:
         return "'game_id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
+    game = game_storage.select_by_id(game_id)
     player_id = flask.request.form.get("player_id", None)
 
     if player_id is None:
         return "'player_id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    game = app.game_storage.select(id=game_id)
-    player = app.player_storage.select(id=player_id)
+    player = player_storage.select(id=player_id)
     game.start(player)
 
     return "OK"
@@ -71,7 +73,7 @@ def game_info():
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    game = app.game_storage.select(id=id)
+    game = game_storage.select_by_id(id)
 
     return flask.jsonify(game.to_json())
 
@@ -83,7 +85,7 @@ def game_state_info():
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    game = app.game_storage.select(id=id)
+    game = game_storage.select_by_id(id)
 
     return flask.jsonify(game.game_state.to_json())
 
@@ -94,7 +96,7 @@ def monitor_game_state(sock):
 
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
-    game = app.game_storage.select(id=id)
+    game = game_storage.select(id=id)
     prev_state = copy.copy(game.game_state.type)
     while True:
         if game.game_state.type != prev_state:
@@ -108,10 +110,10 @@ def monitor_game(sock):
 
     if id is None:
         return "'id' argument must be provided", http.HTTPStatus.BAD_REQUEST
-    save_count = len(app.game_storage.select(id=id).players)
+    save_count = len(game_storage.select(id=id).players)
 
     while True:
-        game = app.game_storage.select(id=id)
+        game = game_storage.select(id=id)
         current_count = len(game.players)
         if save_count != current_count:
             save_count = current_count
@@ -139,7 +141,7 @@ def game_change_state():
 
     delta = float(delta)
 
-    game = app.game_storage.select(id=game_id)
+    game = game_storage.select_by_id(game_id)
     game.game_state.change_player_score(
         player_id=player_id,
         delta=delta,
@@ -150,7 +152,7 @@ def game_change_state():
 
 @route("GET", '/games/ids')
 def opened_games():
-    game_ids = app.game_storage.get_opened_games()
+    game_ids = game_storage.get_opened_games()
     return flask.jsonify({"ids": game_ids})
 
 
@@ -166,8 +168,8 @@ def join_game():
     if player_id is None:
         return "'player_id' argument must be provided", http.HTTPStatus.BAD_REQUEST
 
-    game = app.game_storage.select(id=game_id)
-    player = app.player_storage.select(id=player_id)
+    game = game_storage.select(id=game_id)
+    player = player_storage.select(id=player_id)
     game.add_player(player)
 
     return "OK"

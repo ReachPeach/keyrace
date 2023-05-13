@@ -18,30 +18,31 @@ class GameState(Model):
     def __init__(
             self,
             game_id: str,
-            players: set[Player],
+            players: list[Player],
             text_length: int,
+            id: str = generate_id(),
     ):
-        self.id = generate_id()
+        self.id = id
         self.game_id = game_id
-        self._players: set[Player] = players
-        self._text_length = text_length
-        self._ready: dict[str, bool] = {player.id: False for player in self._players}
+        self.players: list[Player] = players
+        self.text_length = text_length
+
         self.type: GameStateType = GameStateType.IDLE
-        self._players_score: dict[str, float] = {player.id: 0.0 for player in self._players}
+        self.players_score: dict[str, float] = {player.id: 0.0 for player in self.players}
 
         LOG.debug(f"Creating game state (game_state_id = {self.id})")
 
     def _set_type(self, type: GameStateType):
-        LOG.debug(f"Set state for game state (game_state_id = {self.id}) to {type.name}")
+        from storage import GameStateStorage
+
+        LOG.debug(f"Set state for game state (game_state_id = {self.id}) to {self.type.name}")
 
         self.type = type
 
-    @property
-    def player_scores(self) -> dict[str, float]:
-        return self._players_score
+        GameStateStorage().update(self)
 
     def try_start(self, player):
-        if self.type != GameStateType.IDLE:
+        if self._type != GameStateType.IDLE:
             LOG.debug(
                 f"Failed to start game (game_id = {self.game_id}). Current game state type is {self.type.name}"
             )
@@ -52,17 +53,20 @@ class GameState(Model):
         LOG.debug(
             f"Player (player_id = ..) is ready to start game (game_id = {self.game_id})."
         )
-
-        if all(self._ready.values()):
-            LOG.debug(f"Starting game (id = {self.game_id})")
-            self._set_type(GameStateType.IN_PROGRESS)
+        # TODO:
+        # if all(self._ready.values()):
+        #     LOG.debug(f"Starting game (id = {self.game_id})")
+        #     self._set_type(GameStateType.IN_PROGRESS)
 
     def add_player(self, player):
-        self._players.add(player)
-        self._players_score[player.id] = 0.0
-        self._ready[player.id] = False
+        //TODO:
+        # self._players.add(player)
+        # self._players_score[player.id] = 0.0
+        # self._ready[player.id] = False
 
     def change_player_score(self, player_id: str, delta: float):
+        from storage import GameStateStorage
+
         if self.type != GameStateType.IN_PROGRESS:
             LOG.debug(f"Fail to change player score (game_id = {self.game_id}, player_id = {player_id})."
                       f"Current game state type is {self.type.name}"
@@ -72,25 +76,27 @@ class GameState(Model):
 
         LOG.debug(f"Changing player score (game_id = {self.game_id}, player_id = {player_id}, delta = {delta})")
 
-        self._players_score[player_id] += delta
+        self.players_score[player_id] += delta
 
         if self._check_maybe_game_end():
             LOG.debug(f"Ending game (game_id = {self.game_id})")
 
             self._set_type(GameStateType.DONE)
 
+        GameStateStorage().update(self)
+
     def is_game_end(self) -> bool:
         return self.type == GameStateType.DONE
 
     def get_winner(self) -> str:
-        for player in self._players:
-            if self._players_score[player.id] >= self._text_length:
+        for player in self.players:
+            if self.players_score[player.id] >= self.text_length:
                 return player.id
 
     def to_json(self):
         json = {
             "id": self.id,
-            "score": self.player_scores,
+            "score": self.players_score,
             "type": self.type.name,
         }
 
@@ -100,8 +106,8 @@ class GameState(Model):
         return json
 
     def _check_maybe_game_end(self) -> bool:
-        for player in self._players:
-            if self._players_score[player.id] >= self._text_length:
+        for player in self.players:
+            if self.players_score[player.id] >= self.text_length:
                 return True
 
         return False

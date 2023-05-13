@@ -1,29 +1,75 @@
 from backend.game.player import Player
 from storage.base_storage import BaseStorage
+from storage.driver import get_driver
+
+DRIVER = get_driver()
 
 
 class PlayerStorage(BaseStorage):
-    def __init__(self):
-        self._players: dict[str, Player] = {}
+    TABLE_NAME = "players"
 
-    def insert(self, obj: object):
-        pass
+    def update(self, obj: Player):
+        DRIVER.execute_query(
+            """
+            update {table_name} set
+                name = '{name}',
+                rating = {rating}
+            where id = '{id}'
+            """.format(
+                table_name=self.TABLE_NAME,
+                id=obj.id,
+                name=obj.name,
+                rating=obj.rating,
+            )
+        )
 
-    def select(self, **filters) -> Player:
-        id = filters.get("id", None)
+    def select(self, **filters) -> list[Player]:
+        query = """
+            select
+                id,
+                name,
+                rating 
+            from {table_name}
+            where 
+                {condition}
+        """.format(
+            table_name=self.TABLE_NAME,
+            condition=" and ".join([f"{key}='{value}'" for (key, value) in filters.items()]),
+        )
 
-        if not id:
-            raise Exception("'id' must be provided to load Game")
+        data = DRIVER.execute_and_fetch_query(query)
 
-        player = self._players.get(id, None)
+        return [Player(
+            id=_id,
+            name=name,
+            rating=rating
+        ) for (_id, name, rating) in data]
 
-        if player is None:
-            raise Exception(f"Player with id '{id}' not fount")
+    def select_by_id(self, _id: str) -> Player:
+        return self.select(id=_id)[0]
 
-        return player
+    def insert(self, obj: Player):
+        DRIVER.execute_query(
+            """
+            insert into {table_name}
+            (id, name, rating)
+            values
+            ('{id}', '{name}', {rating});
+            """.format(
+                table_name=self.TABLE_NAME,
+                id=obj.id,
+                name=obj.name,
+                rating=obj.rating,
+            )
+        )
 
-    def upsert(self, obj: Player):
-        self._players[obj.id] = obj
-
-    def delete(self, id: str):
-        self._players.pop(id)
+    def delete(self, _id: str):
+        DRIVER.execute_query(
+            """
+            delete from {table_name}
+            where id = '{id}'
+            """.format(
+                table_name=self.TABLE_NAME,
+                id=_id,
+            )
+        )
