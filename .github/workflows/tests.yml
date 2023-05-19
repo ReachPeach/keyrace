@@ -6,8 +6,22 @@ name: Tests
 on: [push]
 
 jobs:
-  build:
+  postgres-db:
+    runs-on: ubuntu-latest
+    container:
+      image: postgres
+      env:
+        POSTGRES_USER: admin
+        POSTGRES_PASSWORD: admin
+        POSTGRES_DB: db
+      ports:
+        - 5432:5432
+      options: --rm -d
+      
 
+  build:
+    needs:
+      - postgres-db
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -24,9 +38,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-      - name: Set up db
-        run: |
-          sudo docker run --network host -e POSTGRES_USER=admin -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=db --rm -d postgres
       - name: Test with pytest
         run: |
           pytest /tests/unit /tests/functional
