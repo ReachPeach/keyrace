@@ -8,8 +8,6 @@ from app import app as App
 
 @pytest.fixture
 def app():
-    tread = threading.Thread(target=App.run)
-    tread.start()
     return App
 
 
