@@ -6,8 +6,12 @@ name: Tests
 on: [push]
 
 jobs:
-  postgres-db:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+        
     container:
       image: postgres
       env:
@@ -17,15 +21,6 @@ jobs:
       ports:
         - 5432:5432
       options: --rm -d
-      
-
-  build:
-    needs:
-      - postgres-db
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v3
