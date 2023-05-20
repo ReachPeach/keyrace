@@ -1,3 +1,6 @@
+import os
+from unittest import mock
+
 import psycopg2
 
 _DRIVER = None
@@ -14,10 +17,10 @@ def get_driver():
 
 class PostgressDriver:
     def __init__(self):
-        self._connection = psycopg2.connect(dbname="db", user="admin", password="admin", host="localhost")
-
-    # def __exit__(self, exc_type, exc_val, exc_tb):
-    #     self._connection.close()
+        if os.getenv("ENV", "COMBAT") != "TEST":
+            self._connection = psycopg2.connect(dbname="db", user="admin", password="admin", host="localhost")
+        else:
+            self._connection = mock.MagicMock()
 
     def execute_query(self, query: str) -> None:
         cursor = self._connection.cursor()

@@ -33,7 +33,7 @@ def test_create_game_ok(client):
             side_effect=dummy_side_effect
         ) as insert_game_mock,
         mock.patch(
-            "storage.player_storage.PlayerStorage.select",
+            "storage.player_storage.PlayerStorage.select_by_id",
             return_value=TEST_PLAYERS[0],
         ) as player_select_mock
     ):
@@ -54,7 +54,7 @@ def test_create_game_players_not_provided(client):
             side_effect=dummy_side_effect
         ) as insert_game_mock,
         mock.patch(
-            "storage.player_storage.PlayerStorage.select",
+            "storage.player_storage.PlayerStorage.select_by_id",
             return_value=TEST_PLAYERS[0],
         ) as player_select_mock
     ):
@@ -75,7 +75,7 @@ def test_create_game_text_length_not_provided(client):
             side_effect=dummy_side_effect
         ) as insert_game_mock,
         mock.patch(
-            "storage.player_storage.PlayerStorage.select",
+            "storage.player_storage.PlayerStorage.select_by_id",
             return_value=TEST_PLAYERS[0],
         ) as player_select_mock
     ):
@@ -90,12 +90,19 @@ def test_create_game_text_length_not_provided(client):
 
 
 def test_game_start_ok(client):
-    with mock.patch(
-            "storage.game_storage.GameStorage.select",
+    with (
+        mock.patch(
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
-    ) as insert_game_mock:
+        ) as insert_game_mock,
+        mock.patch(
+            "backend.game.game.Game.start",
+            side_effect=dummy_side_effect,
+        )
+    ):
         response = client.post("/api/v1/game/start", data={
-            "id": TEST_GAME.id,
+            "game_id": TEST_GAME.id,
+            "player_id": 123,
         })
 
         assert response.status_code == http.HTTPStatus.OK
@@ -105,19 +112,19 @@ def test_game_start_ok(client):
 
 def test_game_start_id_not_provided(client):
     with mock.patch(
-            "storage.game_storage.GameStorage.select",
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
     ) as insert_game_mock:
         response = client.post("/api/v1/game/start")
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
-        assert response.text == "'id' argument must be provided"
+        assert response.text == "'game_id' argument must be provided"
         insert_game_mock.assert_not_called()
 
 
 def test_game_info_test_ok(client):
     with mock.patch(
-            "storage.game_storage.GameStorage.select",
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
     ) as insert_game_mock:
         response = client.get(f"/api/v1/game/info?id={TEST_GAME.id}")
@@ -129,7 +136,7 @@ def test_game_info_test_ok(client):
 
 def test_game_info_test_id_not_provided(client):
     with mock.patch(
-            "storage.game_storage.GameStorage.select",
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
     ) as insert_game_mock:
         response = client.get(f"/api/v1/game/info")
@@ -141,7 +148,7 @@ def test_game_info_test_id_not_provided(client):
 
 def test_game_state_info_test_ok(client):
     with mock.patch(
-            "storage.game_storage.GameStorage.select",
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
     ) as insert_game_mock:
         response = client.get(f"/api/v1/game/state/info?id={TEST_GAME.id}")
@@ -153,7 +160,7 @@ def test_game_state_info_test_ok(client):
 
 def test_game_state_info_test_id_not_provided(client):
     with mock.patch(
-            "storage.game_storage.GameStorage.select",
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
     ) as insert_game_mock:
         response = client.get(f"/api/v1/game/state/info")
@@ -164,10 +171,16 @@ def test_game_state_info_test_id_not_provided(client):
 
 
 def test_game_change_state_ok(client):
-    with mock.patch(
-            "storage.game_storage.GameStorage.select",
+    with (
+        mock.patch(
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
-    ) as insert_game_mock:
+        ) as insert_game_mock,
+        mock.patch(
+            "backend.game.state.game_state.GameState.change_player_score",
+            side_effect=dummy_side_effect,
+        )
+    ):
         response = client.post(f"/api/v1/game/state/change", data={
             "game_id": TEST_GAME.id,
             "player_id": TEST_PLAYERS[0].id,
@@ -181,7 +194,7 @@ def test_game_change_state_ok(client):
 
 def test_game_change_state_game_id_not_provided(client):
     with mock.patch(
-            "storage.game_storage.GameStorage.select",
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
     ) as insert_game_mock:
         response = client.post(f"/api/v1/game/state/change", data={
@@ -196,7 +209,7 @@ def test_game_change_state_game_id_not_provided(client):
 
 def test_game_change_state_player_id_not_provided(client):
     with mock.patch(
-            "storage.game_storage.GameStorage.select",
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
     ) as insert_game_mock:
         response = client.post(f"/api/v1/game/state/change", data={
@@ -211,7 +224,7 @@ def test_game_change_state_player_id_not_provided(client):
 
 def test_game_change_state_delta_not_provided(client):
     with mock.patch(
-            "storage.game_storage.GameStorage.select",
+            "storage.game_storage.GameStorage.select_by_id",
             return_value=TEST_GAME,
     ) as insert_game_mock:
         response = client.post(f"/api/v1/game/state/change", data={

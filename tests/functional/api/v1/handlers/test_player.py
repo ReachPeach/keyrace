@@ -39,7 +39,7 @@ def test_create_player_name_not_provided(client):
 
 def test_player_info_ok(client):
     with mock.patch(
-            "storage.player_storage.PlayerStorage.select",
+            "storage.player_storage.PlayerStorage.select_by_id",
             side_effect=get_player_from_storage_side_effect,
     ) as select_player_mock:
         response = client.get(f"/api/v1/player/info?id={TEST_PLAYER.id}")
