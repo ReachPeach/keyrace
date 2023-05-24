@@ -18,7 +18,7 @@ def get_driver():
 class PostgressDriver:
     def __init__(self):
         if os.getenv("ENV", "COMBAT") != "TEST":
-            self._connection = psycopg2.connect(dbname="db", user="admin", password="admin", host="localhost")
+            self._connection = psycopg2.connect(dbname="db", user="admin", password="admin", host="10.5.0.3")
         else:
             self._connection = mock.MagicMock()
 
