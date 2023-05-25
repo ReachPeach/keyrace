@@ -19,8 +19,7 @@ def init():
             text varchar(1000) not null,
             game_state_id varchar(100) not null,
             
-            constraint games_info_pk primary key (id),
-            constraint games_info_unique_game_state_id unique (game_state_id)
+            constraint games_info_pk primary key (id)
         );
         
         create table if not exists games_players (
@@ -36,10 +35,7 @@ def init():
             id varchar(100) not null,
             game_id varchar(100) not null,
             text_length int not null,
-            game_type game_type_enum not null default 'IDLE',
-            
-            constraint game_states_info_pk primary key (id),
-            constraint game_states_info_unique_game_id unique (game_id)
+            game_type game_type_enum not null default 'IDLE'         
         );
         
         create table if not exists game_states_player_score (

@@ -71,7 +71,11 @@ def base_sock(
 
                 return ret
             except Exception as e:
-                LOG.error(f"Sock call fails with error '{str(e)}'. Request id = {request_id}")
+                LOG.error_store(
+                    f"Sock call fails with error '{str(e)}'. Request id = {request_id}",
+                    request_id=request_id,
+                )
+                LOG.error(traceback.format_exc())
 
                 return str(e), http.HTTPStatus.INTERNAL_SERVER_ERROR
 
