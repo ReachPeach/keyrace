@@ -20,7 +20,7 @@ class GameState(Model):
             game_id: str,
             players: list[Player],
             text_length: int,
-            id: str = generate_id(),
+            id: str = "game_state_id" + generate_id(),
     ):
         self.id = id
         self.game_id = game_id

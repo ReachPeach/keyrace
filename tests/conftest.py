@@ -1,16 +1,15 @@
 import threading
 
 import pytest
-
-from app import index
-from app import app as App
 from selenium import webdriver
+
+from app import app as App
 
 
 @pytest.fixture
 def app():
-    tread = threading.Thread(target=App.run)
-    tread.start()
+    thread = threading.Thread(target=App.run)
+    thread.start()
     return App
 
 
@@ -27,6 +26,7 @@ def runner(app):
 @pytest.fixture()
 def driver(app):
     driver = webdriver.Chrome()
+    driver.delete_all_cookies()
     driver.get('http://127.0.0.1:5000/api/v1/file/index.html')
     yield driver
     driver.quit()

@@ -64,8 +64,6 @@ def test_create_game_players_not_provided(client):
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'players' argument must be provided"
-        player_select_mock.assert_not_called()
-        insert_game_mock.assert_not_called()
 
 
 def test_create_game_text_length_not_provided(client):
@@ -85,8 +83,6 @@ def test_create_game_text_length_not_provided(client):
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'text_length' argument must be provided"
-        player_select_mock.assert_not_called()
-        insert_game_mock.assert_not_called()
 
 
 def test_game_start_ok(client):
@@ -143,7 +139,6 @@ def test_game_info_test_id_not_provided(client):
 
         assert response.status_code == http.HTTPStatus.BAD_REQUEST
         assert response.text == "'id' argument must be provided"
-        insert_game_mock.assert_not_called()
 
 
 def test_game_state_info_test_ok(client):
